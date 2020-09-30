@@ -61,6 +61,11 @@ class YamlScheduler(object):
             tag (string)   : What to tag this job with. Used to cancel the job at the end of the window
                              format is s_[weekday name]_hh:mm_hh:mm
         """
+
+        # Call the job right at the start of the window as the scheduler will wait interval units before firing for the first time
+
+        job(jobArgs)
+        
         print('Starting ' + tag + ' every ' + str(interval) + ' ' + intervalUnit + '...')
         if intervalUnit == 'seconds':
             schedule.every(interval).seconds.do(job, jobArgs).tag(tag)

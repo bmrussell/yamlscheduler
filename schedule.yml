@@ -2,9 +2,9 @@
 weekdays:
   - weekday:
       name: "wednesday"
-      start: "21:00"
-      end: "21:01"
-      seconds: 1
+      start: "21:10"
+      end: "21:15"
+      minutes: 1
 
   - weekday:
       name: "wednesday"
