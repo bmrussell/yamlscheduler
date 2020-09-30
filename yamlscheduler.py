@@ -16,8 +16,9 @@ class YamlScheduler(object):
             name: "tuesday"
             start: "21:00"
             end: "22:00"
-            interval: 5
+            minutes: 5
 
+    Interval period in YAML can be specified as seconds, minutes or hours
     """    
     _instance = None
     __signal = None
@@ -50,7 +51,7 @@ class YamlScheduler(object):
         self.__signal = True
 
     @classmethod
-    def __StartWindow(self, job, interval, tag):
+    def __StartWindow(self, job, interval,  intervalUnit, tag):
         """__StartWindow: Internal method that starts a window that the job will run in.
         Called by the scheduler at the start of the window.
 
@@ -60,9 +61,13 @@ class YamlScheduler(object):
             tag (string)   : What to tag this job with. Used to cancel the job at the end of the window
                              format is s_[weekday name]_hh:mm_hh:mm
         """
-        print('Starting ' + tag + '...')
-        # TODO: change to .minutes.do() when 
-        schedule.every(interval).seconds.do(job).tag(tag)
+        print('Starting ' + tag + ' every ' + str(interval) + ' ' + intervalUnit + '...')
+        if intervalUnit == 'seconds':
+            schedule.every(interval).seconds.do(job).tag(tag)
+        elif intervalUnit == 'minutes':
+            schedule.every(interval).minutes.do(job).tag(tag)
+        elif intervalUnit == 'hours':
+            schedule.every(interval).hours.do(job).tag(tag)
 
     @classmethod
     def __StopWindow(self, tag):
@@ -77,7 +82,7 @@ class YamlScheduler(object):
         schedule.clear(tag)
 
     @classmethod
-    def Initialise(self, jobToSchedule):
+    def Initialise(self, jobToSchedule, jobArguments):
         """Initialise: Set up the scheduled jobs from the YAML file.
 
         Args:
@@ -113,36 +118,47 @@ class YamlScheduler(object):
                         weekday = scheduleInstance['weekday']
                         dayname = weekday['name']
                         windowStart = weekday['start']
-                        windowEnd = weekday['end']
-                        intervalValue = int(weekday['seconds'])
+                        windowEnd = weekday['end']                        
                         jobTag = 's_' + dayname + '_' + windowStart + '_' + windowEnd
+                        
+                        # Get the interval
+                        intervalNames = ['seconds', 'minutes', 'hours']
+                        intervalName = None
+                        for iName in intervalNames:
+                            if iName in weekday:
+                                intervalName = iName
+                        
+                        # Now we know the interval get its value
+                        if intervalName is None:
+                            raise('Interval for schedule must be given as seconds, minutes or hours')
+                        intervalValue = int(weekday[intervalName])
 
                         if dayname == 'monday':
-                            schedule.every().monday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, tag=jobTag)
+                            schedule.every().monday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, intervalUnit=intervalName, tag=jobTag)
                             schedule.every().monday.at(windowEnd).do(YamlScheduler.__StopWindow, tag=jobTag)
                         
                         if dayname == 'tuesday':
-                            schedule.every().tuesday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, tag=jobTag)
+                            schedule.every().tuesday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, intervalUnit=intervalName, tag=jobTag)
                             schedule.every().tuesday.at(windowEnd).do(YamlScheduler.__StopWindow, tag=jobTag)
                         
                         if dayname == 'wednesday':
-                            schedule.every().wednesday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, tag=jobTag)
+                            schedule.every().wednesday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, intervalUnit=intervalName, tag=jobTag)
                             schedule.every().wednesday.at(windowEnd).do(YamlScheduler.__StopWindow, tag=jobTag)
                         
                         if dayname == 'thursday':
-                            schedule.every().thursday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, tag=jobTag)
+                            schedule.every().thursday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, intervalUnit=intervalName, tag=jobTag)
                             schedule.every().thursday.at(windowEnd).do(YamlScheduler.__StopWindow, tag=jobTag)
                         
                         if dayname == 'friday':
-                            schedule.every().friday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, tag=jobTag)
+                            schedule.every().friday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, intervalUnit=intervalName, tag=jobTag)
                             schedule.every().friday.at(windowEnd).do(YamlScheduler.__StopWindow, tag=jobTag)
                         
                         if dayname == 'saturday':
-                            schedule.every().saturday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, tag=jobTag)
+                            schedule.every().saturday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, intervalUnit=intervalName, tag=jobTag)
                             schedule.every().saturday.at(windowEnd).do(YamlScheduler.__StopWindow, tag=jobTag)
                         
                         if dayname == 'sunday':
-                            schedule.every().sunday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, tag=jobTag)
+                            schedule.every().sunday.at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, interval=intervalValue, intervalUnit=intervalName, tag=jobTag)
                             schedule.every().sunday.at(windowEnd).do(YamlScheduler.__StopWindow, tag=jobTag)
 
 
