@@ -1,13 +1,13 @@
 --- # Polling Schedule
 weekdays:
   - weekday:
-      name: "wednesday"
-      start: "21:10"
-      end: "21:15"
-      minutes: 1
+      name: "thursday"
+      start: "09:51"
+      end: "09:52"
+      seconds: 5
 
   - weekday:
-      name: "wednesday"
-      start: "20:57"
-      end: "20:57"
+      name: "thursday"
+      start: "09:24"
+      end: "09:25"
       seconds: 5
