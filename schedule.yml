@@ -2,8 +2,8 @@
 weekdays:
   - weekday:
       name: "thursday"
-      start: "09:51"
-      end: "09:52"
+      start: "21:17"
+      end: "21:18"
       seconds: 5
 
   - weekday:

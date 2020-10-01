@@ -19,8 +19,9 @@ class YamlScheduler(object):
     Interval period in YAML can be specified as seconds, minutes or hours
     """    
     _instance = None
-    __signal = None
+    __stopwaiting = False
     __logger = None
+    __runOnce = False
 
     def __new__(cls):
         """Singleton initialisation. Not much to see here. Move along. Move along.
@@ -29,8 +30,8 @@ class YamlScheduler(object):
         if cls._instance is None:            
             cls._instance = super(YamlScheduler, cls).__new__(cls)
             # Put any initialization here.
-            __signal = False
-
+            cls.__stopwaiting = False
+            cls.__runOnce = False
         return cls._instance
 
     @classmethod
@@ -38,16 +39,30 @@ class YamlScheduler(object):
         """Wait: blocks main execution thread waiting for next job.
         Might be an idea to set some jobs scheduled first.
         """        
-        while not self.__signal:
+        while not self.__stopwaiting:
             schedule.run_pending()
             time.sleep(1)
+    
+    @classmethod 
+    def RunOnce(cls, value):
+        """"RunOnce: Only run one window - use for testing
+
+        Args:
+            value (bool) : True - run only one schedule window
+        """
+        cls.__runOnce = value
+
+    @classmethod 
+    def IsRunOnce(cls):
+        return cls.__runOnce
 
     @classmethod
-    def Stop(self):
+    def Stop(cls):
         """Stop: Stop the main execution loop.
+        Allows the 
         Something altogether more sophisticated required for multithreading
         """        
-        self.__signal = True
+        cls.__stopwaiting = True
 
     @classmethod
     def __StartWindow(self, job, jobArgs, interval, intervalUnit, tag):
@@ -80,22 +95,24 @@ class YamlScheduler(object):
         if not self.__logger is None:
             self.__logger.info('Unscheduling ' + tag + '...')
 
+        if YamlScheduler.IsRunOnce():
+            YamlScheduler.Stop()
+
         schedule.clear(tag)
 
     @classmethod
-    def Initialise(self, logger, jobToSchedule, jobArguments):
+    def Initialise(self, logger, jobToSchedule, jobArguments, config="schedule.yml"):
         """Initialise: Set up the scheduled jobs from the YAML file.
 
         Args:
+            logger (fn) : Python logging singleton, if not None
             jobToSchedule (fn) : The job to run
-        
-        Todo: 
-            Maybe extend to pass a {name,fn} dictionary so that can be referenced from the YAML file too.
+            jobArguments (object) : wrapper for arguments to pass to the job
         """
         try:
-            self.__signal = False
+            self.__stopwaiting = False
             self.__logger = logger
-            with open("schedule.yml", "r") as ymlfile:
+            with open(config, 'r') as ymlfile:
                 cfg = yaml.load(ymlfile, yaml.FullLoader)
 
                 if not self.__logger is None:
@@ -124,6 +141,8 @@ class YamlScheduler(object):
 
                         # Schedule the start and end window on the specific day
                         # Call schedule.every().<<dayname>>.at(...
+                        if not self.__logger is None:
+                            self.__logger.info('Scheduling window for ' + dayname + ' at ' + windowStart + ' to ' + windowEnd)
                         getattr(schedule.every(), dayname).at(windowStart).do(YamlScheduler.__StartWindow, job=jobToSchedule, jobArgs=jobArguments, interval=intervalValue, intervalUnit=intervalName, tag=jobTag)
                         getattr(schedule.every(), dayname).at(windowEnd).do(YamlScheduler.__StopWindow, tag=jobTag)
 
