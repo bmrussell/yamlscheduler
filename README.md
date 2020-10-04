@@ -8,5 +8,3 @@ env\Scripts\python.exe -m pip install pyyaml        # duh
 env\Scripts\python.exe -m pip install schedule      # double duh
 ```
 
-## TODO
-Proper tests https://code.visualstudio.com/docs/python/testing
